@@ -8,6 +8,7 @@ data = select(homecredit, c(TARGET,CODE_GENDER,FLAG_OWN_REALTY,
 # filter only loans
 data = na.omit(data)               # omit NA rows
 head(data)
+table(data$TARGET)
 
 data["YEARS"]=-data["DAYS_BIRTH"]/365
 data["YEARS_EMPLOYED"]=-data["DAYS_EMPLOYED"]/365
@@ -19,6 +20,14 @@ summary(data)
 boxplot(data$YEARS_EMPLOYED)
 hist(data$YEARS_EMPLOYED)
 
+
+data$CAT_YEARS <- cut(data$YEARS,
+                       breaks=c(min(data$YEARS),28,40,52,max(data$YEARS)),
+                       labels=c('Young Adults', 'Adults', 'Old Adults', 'Boomers'))
+plot(factor(data$TARGET) ~ factor(data$CAT_YEARS), data =data,  col = c("forestgreen","lightsalmon"))
+
+
+plot(factor(data$TARGET) ~ factor(data$CODE_GENDER), data =data,  col = c("forestgreen","lightsalmon"))
 
 
 
