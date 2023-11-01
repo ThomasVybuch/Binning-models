@@ -57,15 +57,3 @@ M_1 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
 summary(M_1)
 
 
-
-
-
-#neco od Martina z chatu 
-
-data$CAT_YEARS <- cut(data$YEARS,
-                       breaks=c(min(data$YEARS),28,40,52,max(data$YEARS)),
-                       labels=c('Young Adults', 'Adults', 'Old Adults', 'Boomers'))
-plot(factor(data$TARGET) ~ factor(data$CAT_YEARS), data =data,  col = c("forestgreen","lightsalmon"))
-
-
-plot(factor(data$TARGET) ~ factor(data$CODE_GENDER), data =data,  col = c("forestgreen","lightsalmon"))
