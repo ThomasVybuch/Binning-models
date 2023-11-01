@@ -55,3 +55,17 @@ M_1 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
            AMT_INCOME_TOTAL+AMT_CREDIT+AMT_ANNUITY+NAME_FAMILY_STATUS+
            DAYS_BIRTH+DAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = data, family = binomial)
 summary(M_1)
+
+
+
+
+
+#neco od Martina z chatu 
+
+data$CAT_YEARS <- cut(data$YEARS,
+                       breaks=c(min(data$YEARS),28,40,52,max(data$YEARS)),
+                       labels=c('Young Adults', 'Adults', 'Old Adults', 'Boomers'))
+plot(factor(data$TARGET) ~ factor(data$CAT_YEARS), data =data,  col = c("forestgreen","lightsalmon"))
+
+
+plot(factor(data$TARGET) ~ factor(data$CODE_GENDER), data =data,  col = c("forestgreen","lightsalmon"))
