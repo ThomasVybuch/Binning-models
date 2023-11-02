@@ -24,9 +24,23 @@ data$CAT_YEARS <- cut(data$YEARS,
                        breaks=c(min(data$YEARS),28,40,52,max(data$YEARS)),
                        labels=c('Young Adults', 'Adults', 'Old Adults', 'Boomers'))
 plot(factor(data$TARGET) ~ factor(data$CAT_YEARS), data =data,  col = c("forestgreen","lightsalmon"))
-
-
 plot(factor(data$TARGET) ~ factor(data$CODE_GENDER), data =data,  col = c("forestgreen","lightsalmon"))
+
+data$CAT_YEARS_1 <- cut(data$YEARS, breaks=seq(min(data$YEARS),max(data$YEARS),by=2))
+males=data[data$CODE_GENDER=="M",]
+#males=data[data$CODE_GENDER=="M" & data$FLAG_OWN_REALTY=="N",]
+plot(factor(TARGET) ~ factor(CAT_YEARS_1), data = males,  col = c("forestgreen","lightsalmon"))
+plot(factor(TARGET) ~ factor(CAT_YEARS_1), data = data,  col = c("forestgreen","lightsalmon"))           #stejný mezi muži i ženami
+  
+     
+plot(factor(TARGET) ~ AMT_CREDIT,data=males)   
+plot(factor(TARGET) ~ NAME_EDUCATION_TYPE, data = data)
+plot(factor(TARGET) ~ NAME_FAMILY_STATUS, data = data)
+
+data$Pocet_splatek=data$AMT_CREDIT/data$AMT_ANNUITY                                                      #počet ročních splátek 
+data$Pocet_splatek <- cut(data$Pocet_splatek, breaks=seq(min(data$Pocet_splatek),max(data$Pocet_splatek),by=2))
+plot(factor(TARGET)~Pocet_splatek, data = data )                                                         #nelineární vůči targetu
+
 
 #Tabulka B.1
  #In addition, since, for example, the HCDR data set comprises many variables, some of which have a significantly low fill rate, the omission of missing values while retaining all the features would result in a low number of total observations. Consequently, for all data sets, only variables with at least 80% of non-missing observations are preserved for the analysis.
