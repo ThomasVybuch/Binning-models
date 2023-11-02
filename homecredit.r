@@ -1,4 +1,5 @@
 homecredit <- read.csv("C:/Users/Martin Kubát/Downloads/homecredit/application_train.csv", stringsAsFactors=TRUE)
+#homecredit<- read.csv("~/home-credit-default-risk/application_train.csv", stringsAsFactors=TRUE)
 #library(dplyr)
 homecredit = homecredit[!grepl("Revolving loans", homecredit$NAME_CONTRACT_TYPE),]   #only cash loans
 data = select(homecredit, c(TARGET,CODE_GENDER,FLAG_OWN_REALTY,
