@@ -28,7 +28,10 @@ plot(factor(data$TARGET) ~ factor(data$CAT_YEARS), data =data,  col = c("forestg
 
 plot(factor(data$TARGET) ~ factor(data$CODE_GENDER), data =data,  col = c("forestgreen","lightsalmon"))
 
-
+#Tabulka B.1
+ #In addition, since, for example, the HCDR data set comprises many variables, some of which have a significantly low fill rate, the omission of missing values while retaining all the features would result in a low number of total observations. Consequently, for all data sets, only variables with at least 80% of non-missing observations are preserved for the analysis.
+#only categorical variables with at most two categories will be considered for the analysis.
+# The point biserial correlation is numerically equivalent to the Pearson correlation. For two highly correlated variables, the one with the higher correlation with the dependent variable will be retained. 
 
 ###### Prvni pokusy SMBINNING
 #install.packages("smbinning")
