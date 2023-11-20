@@ -75,4 +75,11 @@ M_1 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
 summary(M_1)
 drop1(M_1, test="Chi")
 
+##### creates binned variables from numeric #####
+varibles = c("AMT_INCOME_TOTAL","AMT_CREDIT","AMT_ANNUITY")
+for (i in varibles) { 
 
+  result=smbinning(data, "TARGET", i)
+  data[paste("binned", i)] <- as.numeric(as.character(cut(data[,i], breaks = result$bands, labels = result$ivtable$IV[1:(length(result$ivtable$IV)-2)])))
+
+}
