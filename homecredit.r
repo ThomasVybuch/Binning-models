@@ -66,7 +66,7 @@ smbinning.plot ( result , option= "WoE")
 ##WoE
 #install.packages("woe")
 library(woe)
-
+#Weight of Evidence je v podstatě logaritmus poměru pravděpodobností dvou událostí: pravděpodobnosti, že klient splní podmínku (například koupí produkt), oproti pravděpodobnosti, že klient tuto podmínku nesplní. Výsledek je vážen podle významu jednotlivých kategorií. Vyšší hodnota WOE naznačuje silnější vliv proměnné na danou událost.
 
 #Logistická regrese 
 M_1 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
