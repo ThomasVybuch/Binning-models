@@ -67,6 +67,8 @@ smbinning.plot ( result , option= "WoE")
 #install.packages("woe")
 library(woe)
 #Weight of Evidence je v podstatě logaritmus poměru pravděpodobností dvou událostí: pravděpodobnosti, že klient splní podmínku (například koupí produkt), oproti pravděpodobnosti, že klient tuto podmínku nesplní. Výsledek je vážen podle významu jednotlivých kategorií. Vyšší hodnota WOE naznačuje silnější vliv proměnné na danou událost.
+#Hodnota GINI se pohybuje od 0 do 1, kde 0 znamená náhodné klasifikování a 1 znamená dokonalé klasifikování. GINI měří měří "nekorektnost" predikcí modelu, a tedy, čím vyšší hodnota GINI, tím lepší je model.
+# Čím vyšší je hodnota AUC (blíže k 1), tím lepší je výkonnost modelu.
 
 #Logistická regrese 
 M_1 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
