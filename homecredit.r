@@ -85,3 +85,43 @@ for (i in varibles) {
   data[paste("binned", i)] <- as.numeric(as.character(cut(data[,i], breaks = result$bands, labels = result$ivtable$IV[1:(length(result$ivtable$IV)-2)])))
 
 }
+
+################################################pokus o Automatizaci 
+prepare_df <- function(data) {
+    data = data[!grepl("Revolving loans", homecredit$NAME_CONTRACT_TYPE),]   #only cash loans
+    data = select(data, c(TARGET,CODE_GENDER,FLAG_OWN_REALTY,
+                                  AMT_INCOME_TOTAL,AMT_CREDIT,AMT_ANNUITY,NAME_FAMILY_STATUS,
+                                  DAYS_BIRTH,DAYS_EMPLOYED,NAME_EDUCATION_TYPE,NAME_HOUSING_TYPE)) 
+    # filter only loans
+    data = na.omit(data)               # omit NA rows
+    data=data[!grepl(365243, data$DAYS_EMPLOYED),]
+    data$NUM_ANNUITY=data$AMT_CREDIT/data$AMT_ANNUITY             # CREDIT/ANUITY
+    data$ANNUITY_RATIO=data$AMT_INCOME_TOTAL/data$AMT_ANNUITY     # INCOME/ANUITY
+    data = data[!duplicated(data), ]
+  return (data)
+}
+
+data = prepare_df(homecredit)
+train  <- data[10001:(dim(data)[1]), ]
+test   <- data[1:10000, ]
+
+variables = c("NUM_ANNUITY")
+#result=smbinning(data, "TARGET", "ANNUITY_RATIO")
+sm_binning <- function(data, variables) {
+    for (i in variables) { 
+        
+      result=smbinning(data, "TARGET", i)
+      data[paste("binned", i)] <- as.numeric(as.character(cut(data[,i], breaks = result$bands, 
+                                                              labels = result$ivtable$IV[1:(length(result$ivtable$IV)-2)])))
+      #breaks_i = result$bands
+      #lables_i = result$ivtable$IV[1:(length(result$ivtable$IV)-2)]
+      }
+  return (data)
+}
+
+data = (sm_binning(prepare_df(train),variables))
+
+test = prepare_df(test)
+test["transformed"] = as.numeric(as.character(cut(test[,"NUM_ANNUITY"], breaks = breaks_i, 
+                                                  labels = result$ivtable$IV[1:(length(result$ivtable$IV)-2)])))
+head(test)
