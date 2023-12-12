@@ -1,2 +1,2 @@
 # Binning-models
-The things we do for credits.
+Usage - at first run packages file. Then proceed to main file.
