@@ -86,7 +86,11 @@ for (i in varibles) {
 
 }
 
-################################################pokus o Automatizaci 
+##############pokus o automatizaci################
+homecredit<- read.csv("~/home-credit-default-risk/application_train.csv", stringsAsFactors=TRUE)
+library(dplyr)
+library(smbinning)
+library(pROC)
 prepare_df <- function(data) {
     data = data[!grepl("Revolving loans", homecredit$NAME_CONTRACT_TYPE),]   #only cash loans
     data = select(data, c(TARGET,CODE_GENDER,FLAG_OWN_REALTY,
@@ -102,26 +106,53 @@ prepare_df <- function(data) {
 }
 
 data = prepare_df(homecredit)
-train  <- data[10001:(dim(data)[1]), ]
-test   <- data[1:10000, ]
+train  <- data[100001:(dim(data)[1]), ]
+test   <- data[1:100000, ]
 
-variables = c("NUM_ANNUITY")
+train <- prepare_df(train)
+test <- prepare_df(test)
+
+variables = c("NUM_ANNUITY","ANNUITY_RATIO","DAYS_BIRTH","DAYS_EMPLOYED")
+
 #result=smbinning(data, "TARGET", "ANNUITY_RATIO")
-sm_binning <- function(data, variables) {
+sm_binning <- function(data, variable, test) {
     for (i in variables) { 
         
       result=smbinning(data, "TARGET", i)
-      data[paste("binned", i)] <- as.numeric(as.character(cut(data[,i], breaks = result$bands, 
+      data[paste("binned",i,sep = "")] <- as.numeric(as.character(cut(data[,i], breaks = result$bands, 
                                                               labels = result$ivtable$IV[1:(length(result$ivtable$IV)-2)])))
-      #breaks_i = result$bands
-      #lables_i = result$ivtable$IV[1:(length(result$ivtable$IV)-2)]
-      }
+      print(result)
+      smbinning.plot ( result , option= "dist" ) 
+      smbinning.plot ( result , option= "WoE")
+      
+      breaks = c(-Inf,result$bands[2:(length(result$bands)-1)],Inf)                       #breaks=result$bands
+      lables = result$ivtable$IV[1:(length(result$ivtable$IV)-2)]
+      print(breaks)                         
+      #binned_test(test,breaks,lables,i)
+      test[paste("binned",i,sep = "")] = as.numeric(as.character(cut(test[,i], breaks = breaks, 
+                                                                      labels = lables)))
+    }
+    data=list(data,test)
   return (data)
 }
 
-data = (sm_binning(prepare_df(train),variables))
 
-test = prepare_df(test)
-test["transformed"] = as.numeric(as.character(cut(test[,"NUM_ANNUITY"], breaks = breaks_i, 
-                                                  labels = result$ivtable$IV[1:(length(result$ivtable$IV)-2)])))
-head(test)
+SM = sm_binning(train,variables,test)
+
+train = SM[[1]]
+test = SM[[2]]
+
+M_1 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
+             AMT_INCOME_TOTAL+AMT_CREDIT+AMT_ANNUITY+NAME_FAMILY_STATUS+
+             DAYS_BIRTH+DAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
+
+M_2 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
+             binnedNUM_ANNUITY+binnedANNUITY_RATIO+NAME_FAMILY_STATUS+
+             binnedDAYS_BIRTH+binnedDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
+
+
+predicted <- predict(M_1, test, type="response")
+auc(test$TARGET, predicted)
+predicted <- predict(M_2, test, type="response")
+auc(test$TARGET, predicted)
+
