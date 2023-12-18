@@ -156,3 +156,84 @@ auc(test$TARGET, predicted)
 predicted <- predict(M_2, test, type="response")
 auc(test$TARGET, predicted)
 
+
+
+
+
+
+# 
+#################################################################
+# TREES 
+#################################################################
+# Libraries
+library(party)
+library(rpart.plot)
+
+# zohledneni train dat
+PARTY_TREE2 <- function(Y, X, table) {
+  model <- ctree(formula = as.formula(paste(Y, "~", X)),
+                 data = table,
+                 controls = ctree_control(maxdepth = 3) )
+  return(model)
+}
+
+for (i in variables) {
+  model = PARTY_TREE2(Y = "TARGET", X = i, table = train)
+  # insert transformed variables in train
+  cats_train <-  predict(model,type="response")
+  transformed_values <- as.numeric(factor(cats_train))
+  train[paste("TREE",i,sep = "")] <- transformed_values
+  
+  # Insert transformed variables in test
+  cats_test <-  predict(model,type="response", newdata=test)
+  transformed_values <- as.numeric(factor(cats_test))
+  test[paste("TREE",i,sep = "")] <- transformed_values
+}
+
+
+# Model with variables tranSformed by PARTY_TREE2
+M_3 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
+             TREENUM_ANNUITY+TREEANNUITY_RATIO+NAME_FAMILY_STATUS+
+             TREEDAYS_BIRTH+TREEDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
+
+predicted <- predict(M_3, test, type="response")
+auc(test$TARGET, predicted)
+
+
+
+#############################################
+# SECOND TREES
+#############################################
+STROM2 <- function(Y, X, cp, method, table) {
+  # Declare control parameters
+  controls <- rpart.control(maxcompete = 2, cp = cp, maxdepth = 3)
+  # Fit a decision tree using rpart with the specified control parametres
+  model <- rpart(formula = as.formula(paste(Y, "~", X)),
+                 data = table,
+                 control = controls,
+                 method = method )
+  return(model)
+}
+
+for (i in variables) {
+  # Create model using rpart
+  model = STROM2(Y = "TARGET", X = i, cp= -0.01, method = "class", table = train)
+  
+  # insert transformed variables in train
+  predicted_categories <-  predict(model,type="prob")
+  transformed_values <- as.numeric(as.numeric(factor(predicted_categories[,2])))
+  train[paste("STROM",i,sep = "")] <- transformed_values
+
+  # Insert transformed variables in test
+  cats_test <-  predict(model,type="prob", newdata=test)
+  transformed_values <- as.numeric(as.numeric(factor(cats_test[,2])))
+  test[paste("STROM",i,sep = "")] <- transformed_values
+}
+
+# Model with variables tranSformed by STROM2
+M_4 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
+             STROMNUM_ANNUITY+STROMANNUITY_RATIO+NAME_FAMILY_STATUS+
+             STROMDAYS_BIRTH+STROMDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
+
+predicted <- predict(M_4, test, type="response")
+auc(test$TARGET, predicted)
