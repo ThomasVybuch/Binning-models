@@ -196,8 +196,8 @@ M_3 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
              TREENUM_ANNUITY+TREEANNUITY_RATIO+NAME_FAMILY_STATUS+
              TREEDAYS_BIRTH+TREEDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
 
-predicted <- predict(M_3, test, type="response")
-auc(test$TARGET, predicted)
+predicted3 <- predict(M_3, test, type="response")
+auc(test$TARGET, predicted3)
 
 
 
@@ -235,5 +235,57 @@ M_4 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
              STROMNUM_ANNUITY+STROMANNUITY_RATIO+NAME_FAMILY_STATUS+
              STROMDAYS_BIRTH+STROMDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
 
-predicted <- predict(M_4, test, type="response")
-auc(test$TARGET, predicted)
+predicted4 <- predict(M_4, test, type="response")
+auc(test$TARGET, predicted4) # greatest of all trees
+
+
+
+###########################################
+# PREPARATIONS FOR TREES 3
+###########################################
+TRAIN_0 <- train[train$TARGET == 0, ] # Where TARGET = 0
+TRAIN_1 <- train[train$TARGET == 1, ] # Where TARGET = 1
+
+set.seed(12345)
+SAMPLE_0 <- sample_n(TRAIN_0, 600) # random saple
+SAMPLE_1 <- sample_n(TRAIN_1, 300)
+SAMPLE <- rbind(SAMPLE_0, SAMPLE_1) # union of samples
+
+# alternative function 
+STROM3 <- function(Y, X, cp, method, table) {
+  # Declare control parameters
+  controls <- rpart.control(maxcompete = 4, cp = cp, maxdepth = 4)
+  # Fit a decision tree using rpart with the specified control parametres
+  model <- rpart(formula = as.formula(paste(Y, "~", X)),
+                 data = table,
+                 control = controls,
+                 method = method )
+  return(model)
+}
+#model = STROM3(Y = "TARGET", X = i, cp= 0.0001, method = "class", table = SAMPLE)
+#rpart.plot(model)
+
+for (i in variables) {
+  # Create model using rpart
+  model = STROM3(Y = "TARGET", X = i, cp= 0.0001, method = "class", table = SAMPLE) # use SAMPLE table!
+  
+  # insert transformed variables in train
+  predicted_categories <-  predict(model,type="prob", newdata = train)
+  transformed_values <- as.numeric(as.numeric(factor(predicted_categories[,2])))
+  train[paste("STROM3",i,sep = "")] <- transformed_values
+  
+  # Insert transformed variables in test
+  cats_test <-  predict(model,type="prob", newdata=test)
+  transformed_values <- as.numeric(as.numeric(factor(cats_test[,2])))
+  test[paste("STROM3",i,sep = "")] <- transformed_values
+}
+
+# Model with variables tranSformed by STROM2
+M_5 = glm (TARGET ~ CODE_GENDER+FLAG_OWN_REALTY+
+             STROM3NUM_ANNUITY+STROM3ANNUITY_RATIO+NAME_FAMILY_STATUS+
+             STROM3DAYS_BIRTH+STROM3DAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
+
+predicted5 <- predict(M_5, test, type="response")
+auc(test$TARGET, predicted5) # smallest of all trees
+
+
