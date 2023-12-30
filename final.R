@@ -90,6 +90,9 @@ variables_CAT = c("CODE_GENDER",
 
 # !!!DO NOT LAUNCH BEFORE GAM MODELS!!!
 
+# Set seed
+set.seed(12345)
+
 #############################################
 # PARTY 
 #############################################
