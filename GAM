@@ -1,13 +1,57 @@
-############## GAM ##############
-library("gam")
-library("mgcv")
-library("ggplot2")
+rm(list = ls())
+graphics.off()
+library(Information)
+library(dplyr)
+library(pROC)
 
-data = select(data, c(TARGET,CODE_GENDER,
-                      NAME_FAMILY_STATUS,
-                      DAYS_BIRTH,DAYS_EMPLOYED,NAME_EDUCATION_TYPE,NAME_HOUSING_TYPE,
-                      DAYS_LAST_PHONE_CHANGE, DAYS_ID_PUBLISH, HOUR_APPR_PROCESS_START ,
-                      NAME_CONTRACT_TYPE))
+homecredit<- read.csv("~/home-credit-default-risk/application_train.csv", stringsAsFactors=TRUE)
+#homecredit = homecredit[!grepl("Revolving loans", homecredit$NAME_CONTRACT_TYPE),]   #only cash loans
+
+homecredit$NUM_ANNUITY=homecredit$AMT_CREDIT / homecredit$AMT_ANNUITY             # CREDIT/ANUITY
+homecredit$ANNUITY_RATIO=homecredit$AMT_INCOME_TOTAL / homecredit$AMT_ANNUITY     # INCOME/ANUITY
+homecredit <- homecredit[homecredit$CODE_GENDER == "M" | homecredit$CODE_GENDER == "F", ] # uprav pohlavi
+summary(homecredit$CODE_GENDER)
+
+# asi neimputovat
+#median_employment <- median(homecredit$DAYS_EMPLOYED)
+#homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- median_employment
+homecredit$DAYS_EMPl_NA <- ifelse(homecredit$DAYS_EMPLOYED == 365243, 1, 0)
+homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- 0
+
+variables = c("TARGET","CODE_GENDER",
+              "NUM_ANNUITY","ANNUITY_RATIO","NAME_FAMILY_STATUS",
+              "DAYS_BIRTH","DAYS_EMPLOYED","NAME_HOUSING_TYPE",
+              "DAYS_LAST_PHONE_CHANGE",
+              "NAME_CONTRACT_TYPE",
+              "DAYS_EMPl_NA", "AMT_GOODS_PRICE", "FLAG_OWN_REALTY", "NAME_EDUCATION_TYPE"
+)
+
+prepare_df <- function(data, variables) {
+  data = select(data, all_of(variables)) 
+  
+  # transformations
+  data = na.omit(data)               # omit NA rows
+  data = data[!duplicated(data), ] # more applications from the same person
+  return (data)
+}
+
+data = prepare_df(homecredit, variables)
+
+names <- names(data[,!(names(data) %in% "TARGET")])
+data["CODE_GENDER"]=droplevels(data["CODE_GENDER"], "XNA")
+data=data[!grepl("Unknown", data$NAME_FAMILY_STATUS),]
+data["NAME_FAMILY_STATUS"]=droplevels(data["NAME_FAMILY_STATUS"], "Unknown")
+
+set.seed(1234)
+chosen_rows <- sample(1:nrow(data), 210000)
+test <- data[-chosen_rows, ]
+train <- data[chosen_rows, ]
+
+test=test[!grepl("Unknown", test$NAME_FAMILY_STATUS),]
+train=train[!grepl("Unknown", train$NAME_FAMILY_STATUS),]
+data["CODE_GENDER"]=droplevels(data["CODE_GENDER"], "XNA")
+summary(data)
+summary(train)
 
 ######### Function to set up GAM models
 CreateGAMFormula <- function(data, y){
@@ -35,14 +79,18 @@ CreateGAMFormula <- function(data, y){
   }
   return(as.formula(Formula))
 }
+y=data$TARGET
+names <- names(data[,!(names(data) %in% y)])
+data[names]<-droplevels(data[names], "XNA")
+
 
 f <- CreateGAMFormula(train, "TARGET")
 model <- mgcv::gam(f , data=train, family=binomial(link="logit"), method="REML")
 
 ## Check the concurvity
-concurvity(model,full=TRUE) 
+mgcv::concurvity(model,full=TRUE) 
 #s(DAYS_BIRTH), s(DAYS_EMPLOYED) nechat
-concurvity(model,full=FALSE)
+mgcv::concurvity(model,full=FALSE)
 #dáme pryč AMT_CREDIT
 f<- TARGET ~ variablef1 + s(variable5, bs = "bs") + variablef4 + variablef3 + s(variable2, bs = "bs") + s(variable6, bs = "bs") + variablef5 + s(variable1, bs = "bs") + s(variable7, bs = "bs")
 #FLAG_OWN_REALTY, NAME_EDUCATION_TYPE, s(AMT_INCOME_TOTAL) NENÍ SIGNIFIKANTNÍ
@@ -61,11 +109,10 @@ variablef5=train$NAME_HOUSING_TYPE
 
 summary(model)
 anova(model)
-#anova(modelf, model, test="LRT")
 par(mfrow=c(2,2))
-gam.check(model)
+mgcv::gam.check(model)
 coef(model)
 
 ### Predict the probabilities for the validation dataset.
 predict.model <- predict(model, test, type="response") #již ve formě pravděpodobnosti, tedy po transformaci 1/(1+exp(-predict(model, newdata=test)))
-auc(test$TARGET, predict.model) #pro model bez úprav je 0.6563, s upravami 0.6558
+auc(test$TARGET, predict.model) 
