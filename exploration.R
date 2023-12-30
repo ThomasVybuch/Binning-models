@@ -35,7 +35,7 @@ ggplot(data=df, aes(x=df$AMT_INCOME_TOTAL, group=df$TARGET, fill=factor(df$TARGE
   scale_x_continuous(limits = c(0, 500000))
 
 
-# 3 PODEZÿEL… SPOJIT…
+# 3 PODEZ√òEL√â SPOJIT√â
 ggplot(data=df, aes(x=df$DAYS_LAST_PHONE_CHANGE, group=df$TARGET, fill=factor(df$TARGET))) +
   geom_density(alpha=.5) +
   labs(x = "DAYS_LAST_PHONE_CHANGE",
@@ -87,7 +87,7 @@ ggplot(data=df, aes(x=df$ANNUITY_RATIO, group=df$TARGET, fill=factor(df$TARGET))
 
 
 
-# ZBYL… SPOJIT…
+# ZBYL√â SPOJIT√â
 # DAYS_BIRTH,DAYS_EMPLOYED
 
 ggplot(data=df, aes(x=df$DAYS_BIRTH, group=df$TARGET, fill=factor(df$TARGET))) +
@@ -168,13 +168,14 @@ ggplot(data=homecredit, aes(x=homecredit$CODE_GENDER, group=homecredit$TARGET, f
 #############################################
 # Resulting function for main code
 
-# N¡VRH - vyhodit NAME_FAMILY_STATUS, moûn· i HOUR_APPR_PROCESS_START
+# N√ÅVRH - vyhodit NAME_FAMILY_STATUS, mo≈æn√° i HOUR_APPR_PROCESS_START
 
 prepare_df2 <- function(data) {
-  data = select(data, c(TARGET,CODE_GENDER,FLAG_OWN_REALTY,
+  data = select(data, c(TARGET,CODE_GENDER,
                         AMT_INCOME_TOTAL,AMT_CREDIT,AMT_ANNUITY,NAME_FAMILY_STATUS,
                         DAYS_BIRTH,DAYS_EMPLOYED,NAME_EDUCATION_TYPE,NAME_HOUSING_TYPE,
-                        DAYS_LAST_PHONE_CHANGE, DAYS_ID_PUBLISH, HOUR_APPR_PROCESS_START 
+                        DAYS_LAST_PHONE_CHANGE, DAYS_ID_PUBLISH, HOUR_APPR_PROCESS_START ,
+                        NAME_CONTRACT_TYPE
                         )) 
   # transformations
   data = na.omit(data)               # omit NA rows
