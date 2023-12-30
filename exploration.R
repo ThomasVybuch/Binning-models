@@ -168,26 +168,34 @@ ggplot(data=homecredit, aes(x=homecredit$CODE_GENDER, group=homecredit$TARGET, f
 #############################################
 # Resulting function for main code
 
-# NÁVRH - vyhodit NAME_FAMILY_STATUS, možná i HOUR_APPR_PROCESS_START
+homecredit$NUM_ANNUITY=homecredit$AMT_CREDIT / homecredit$AMT_ANNUITY             # CREDIT/ANUITY
+homecredit$ANNUITY_RATIO=homecredit$AMT_INCOME_TOTAL / homecredit$AMT_ANNUITY     # INCOME/ANUITY
 
-prepare_df2 <- function(data) {
-  data = select(data, c(TARGET,CODE_GENDER,
-                        AMT_INCOME_TOTAL,AMT_CREDIT,AMT_ANNUITY,NAME_FAMILY_STATUS,
-                        DAYS_BIRTH,DAYS_EMPLOYED,NAME_EDUCATION_TYPE,NAME_HOUSING_TYPE,
-                        DAYS_LAST_PHONE_CHANGE, DAYS_ID_PUBLISH, HOUR_APPR_PROCESS_START ,
-                        NAME_CONTRACT_TYPE
-                        )) 
+median_employment <- median(homecredit$DAYS_EMPLOYED)
+homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- median_employment
+homecredit <- homecredit[homecredit$CODE_GENDER == "M" | homecredit$CODE_GENDER == "F", ]
+summary(homecredit$CODE_GENDER)
+  
+variables = c("TARGET","CODE_GENDER",
+              "NUM_ANNUITY","ANNUITY_RATIO","NAME_FAMILY_STATUS",
+              "DAYS_BIRTH","DAYS_EMPLOYED","NAME_EDUCATION_TYPE","NAME_HOUSING_TYPE",
+              "DAYS_LAST_PHONE_CHANGE",
+              "NAME_CONTRACT_TYPE"
+              )
+
+prepare_df <- function(data, variables) {
+  data = select(data, variables) 
+  
   # transformations
   data = na.omit(data)               # omit NA rows
-  data=data[!grepl(365243, data$DAYS_EMPLOYED),] # ????
-  data$NUM_ANNUITY=data$AMT_CREDIT/data$AMT_ANNUITY             # CREDIT/ANUITY
-  data$ANNUITY_RATIO=data$AMT_INCOME_TOTAL/data$AMT_ANNUITY     # INCOME/ANUITY
   data = data[!duplicated(data), ] # more applications from the same person
   return (data)
 }
 
+data = prepare_df(homecredit, variables)
 
-chosen_rows <- sample(1:nrow(data2), 100000)
-test <- data2[chosen_rows, ]
-train <- data2[-chosen_rows, ]
+set.seed(12345)
+chosen_rows <- sample(1:nrow(data), 100000)
+test <- data[chosen_rows, ]
+train <- data[-chosen_rows, ]
 
