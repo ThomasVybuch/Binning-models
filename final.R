@@ -28,6 +28,8 @@ prepare_df <- function(data, variables) {
   return (data)
 }
 
+# Set seed
+set.seed(12345)
 
 # Final datasets
 data = prepare_df(homecredit, variables_ALL)
