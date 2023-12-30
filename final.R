@@ -120,7 +120,8 @@ for (i in variables) {
 # Model with variables tranSformed by PARTY_TREE2
 M_3 = glm (TARGET ~ CODE_GENDER+NAME_CONTRACT_TYPE+DAYS_EMPl_NA+
              TREENUM_ANNUITY+TREEANNUITY_RATIO+NAME_FAMILY_STATUS+
-             TREEDAYS_BIRTH+TREEDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
+             TREEDAYS_BIRTH+TREEDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE+
+             TREEDAYS_LAST_PHONE_CHANGE, data = train, family = binomial)
 
 predicted3 <- predict(M_3, test, type="response")
 auc(test$TARGET, predicted3)
@@ -161,8 +162,10 @@ for (i in variables) {
 # Model with variables tranSformed by STROM2
 M_4 = glm (TARGET ~ CODE_GENDER+NAME_CONTRACT_TYPE+DAYS_EMPl_NA+
              STROMNUM_ANNUITY+STROMANNUITY_RATIO+NAME_FAMILY_STATUS+
-             STROMDAYS_BIRTH+STROMDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE, data = train, family = binomial)
+             STROMDAYS_BIRTH+STROMDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE+
+             STROMDAYS_LAST_PHONE_CHANGE, data = train, family = binomial)
 
 predicted4 <- predict(M_4, test, type="response")
 auc(test$TARGET, predicted4)
+
 
