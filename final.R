@@ -18,6 +18,9 @@ homecredit <- homecredit[homecredit$CODE_GENDER == "M" | homecredit$CODE_GENDER 
 homecredit$DAYS_EMPl_NA <- ifelse(homecredit$DAYS_EMPLOYED == 365243, 1, 0)
 homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- 0
 
+homecredit=homecredit[!grepl("Unknown", homecredit$NAME_FAMILY_STATUS),]
+homecredit["NAME_FAMILY_STATUS"]<-droplevels(homecredit["NAME_FAMILY_STATUS"], "Unknown")
+
 variables_ALL = c("TARGET","CODE_GENDER",
               "NUM_ANNUITY","ANNUITY_RATIO","NAME_FAMILY_STATUS",
               "DAYS_BIRTH","DAYS_EMPLOYED","NAME_EDUCATION_TYPE","NAME_HOUSING_TYPE",
