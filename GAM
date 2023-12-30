@@ -1,117 +1,71 @@
-rm(list = ls())
-graphics.off()
-homecredit<- read.csv("~/home-credit-default-risk/application_train.csv", stringsAsFactors=TRUE)
-homecredit = homecredit[!grepl("Revolving loans", homecredit$NAME_CONTRACT_TYPE),]   #only cash loans
-library(dplyr)
-prepare_df <- function(data) {
-  data = data[!grepl("Revolving loans", homecredit$NAME_CONTRACT_TYPE),]   #only cash loans
-  data = select(data, c(TARGET,CODE_GENDER,FLAG_OWN_REALTY,
-                        AMT_INCOME_TOTAL,AMT_CREDIT,AMT_ANNUITY,NAME_FAMILY_STATUS,
-                        DAYS_BIRTH,DAYS_EMPLOYED,NAME_EDUCATION_TYPE,NAME_HOUSING_TYPE)) 
-  # filter only loans
-  data = na.omit(data)               # omit NA rows
-  data=data[!grepl(365243, data$DAYS_EMPLOYED),]
-  data$NUM_ANNUITY=data$AMT_CREDIT/data$AMT_ANNUITY             # CREDIT/ANUITY
-  data$ANNUITY_RATIO=data$AMT_INCOME_TOTAL/data$AMT_ANNUITY     # INCOME/ANUITY
-  data = data[!duplicated(data), ]
-  return (data)
-}
-
-data = prepare_df(homecredit)
-train  <- data[100001:(dim(data)[1]), ]
-test   <- data[1:100000, ]
-
-train <- prepare_df(train)
-test <- prepare_df(test)
-
-variables = c("NUM_ANNUITY","ANNUITY_RATIO","DAYS_BIRTH","DAYS_EMPLOYED")     
-{
-   vykresleni <- cut(data$NUM_ANNUITY,breaks=c(min(data$NUM_ANNUITY), quantile(data$NUM_ANNUITY, probs=seq(0.05,0.95, 0.03)),max(data$NUM_ANNUITY)))
-   plot(factor(data$TARGET) ~ vykresleni, data =data,  col = c("forestgreen","lightsalmon"))
-}
-
-
-
-
 ############## GAM ##############
-#install.packages("gam")
 library("gam")
-#install.packages("mgcv")
 library("mgcv")
-#install.packages("ggplot2")
 library("ggplot2")
 
-train  <- data[200000:(dim(data)[1]), ]
-train <- prepare_df(train)
+data = select(data, c(TARGET,CODE_GENDER,
+                      NAME_FAMILY_STATUS,
+                      DAYS_BIRTH,DAYS_EMPLOYED,NAME_EDUCATION_TYPE,NAME_HOUSING_TYPE,
+                      DAYS_LAST_PHONE_CHANGE, DAYS_ID_PUBLISH, HOUR_APPR_PROCESS_START ,
+                      NAME_CONTRACT_TYPE))
 
-#TARGET,CODE_GENDER,FLAG_OWN_REALTY, AMT_INCOME_TOTAL,Pocet_splatek,NAME_FAMILY_STATUS, YEARS,YEARS_EMPLOYED,NAME_EDUCATION_TYPE,NAME_HOUSING_TYPE, binned AMT_INCOME_TOTAL binned AMT_CREDIT binned AMT_ANNUITY
-variable=train$NUM_ANNUITY
+######### Function to set up GAM models
+CreateGAMFormula <- function(data, y){
+  names <- names(data[,!(names(data) %in% y)])
+  if (length(names)>0){
+    for (i in 1:length(names)){
+      if (i==1){
+        if (is.factor(data[[names[i]]]) | is.character(data[[names[i]]])){
+          Formula <- paste0(y," ~", names[i])     
+        } else if (is.binary(data[[names[i]]]) | length(unique(data[[names[i]]]))<4){
+          Formula <- paste0(y," ~", names[i])     
+        } else{
+          Formula <- paste0(y," ~ s(", names[i],", bs=\"bs\")")}
+      }
+      else{
+        if (is.factor(data[[names[i]]]) | is.character(data[[names[i]]])){
+          Formula <- paste0(Formula, "+ ",names[i])
+        } else if (is.binary(data[[names[i]]]) | length(unique(data[[names[i]]]))<4){
+          Formula <- paste0(Formula, "+ ",names[i])
+        } else{
+          Formula <-  paste0(Formula," + s(", names[i],", bs=\"bs\")")
+        }
+      }
+    }
+  }
+  return(as.formula(Formula))
+}
 
-train$CODE_GENDER=droplevels(train$CODE_GENDER)
-train$NAME_FAMILY_STATUS=droplevels(train$NAME_FAMILY_STATUS)
-m.gam1=gam(TARGET~s(variable),family=binomial,data=train, method = "REML") #bez bydleni
+f <- CreateGAMFormula(train, "TARGET")
+model <- mgcv::gam(f , data=train, family=binomial(link="logit"), method="REML")
 
-#ASI BLBOST, dela divny grafy
-                          x_new <- seq(0, max(variable), length.out = 100)
-                          y_pred <- predict(m.gam1, data.frame(variable = x_new))
-                          
-                          
-                          ggplot(train, aes(variable, train$TARGET)) +
-                            geom_point() +
-                            geom_smooth(method = "gam", formula = y ~ s(x))
-                          
-                          #smooth terms
-                          model_matrix <- predict(m.gam1, type = "lpmatrix")
-                          plot(train$TARGET ~ variable)
-                          abline(h = 0)
-                          lines(variable, model_matrix[, "s(variable).1"], type = "l", lty = 2)
-                          lines(variable, model_matrix[, "s(variable).2"], type = "l", lty = 2)
+## Check the concurvity
+concurvity(model,full=TRUE) 
+#s(DAYS_BIRTH), s(DAYS_EMPLOYED) nechat
+concurvity(model,full=FALSE)
+#dáme pryč AMT_CREDIT
+f<- TARGET ~ variablef1 + s(variable5, bs = "bs") + variablef4 + variablef3 + s(variable2, bs = "bs") + s(variable6, bs = "bs") + variablef5 + s(variable1, bs = "bs") + s(variable7, bs = "bs")
+#FLAG_OWN_REALTY, NAME_EDUCATION_TYPE, s(AMT_INCOME_TOTAL) NENÍ SIGNIFIKANTNÍ
+variable1=train$NUM_ANNUITY
+variable2=train$DAYS_BIRTH
+variable3=train$AMT_INCOME_TOTAL
+variable4=train$AMT_CREDIT
+variable5=train$AMT_ANNUITY
+variable6=train$DAYS_EMPLOYED
+variable7= train$ANNUITY_RATIO
+variablef1=train$CODE_GENDER
+variablef2=train$FLAG_OWN_REALTY
+variablef3=train$NAME_FAMILY_STATUS
+variablef4=train$NAME_EDUCATION_TYPE
+variablef5=train$NAME_HOUSING_TYPE
 
-plot(train$TARGET ~ variable)
-abline(h = 0)
-
-matplot(variable, model_matrix[, -1], type = "l", lty = 2, add = T)
-lines(y_pred ~ x_new, col = "red", lwd = 2)
-
-# EDFs still indicate the complexity of smooths, and asterisks indicate significance
-#edf=1 znamena linearni.. Ale musi byt p<0.05
-#k je pocet basic function (splinu)
+summary(model)
+anova(model)
+#anova(modelf, model, test="LRT")
 par(mfrow=c(2,2))
-gam.check(m.gam1) #u poctu splatek mala p-hodnota. To asi znaci, že je mala hodnata basic splines. Asi je třeba zvětšit
-summary(m.gam1)    
-anova(m.gam1)
-plot(m.gam1, select = 3, scheme=1)
-#drop1(m.gam1,test = "Chisq")
-plot(m.gam1)
-coef(m.gam1)
-AIC(m.gam1)
-anova(m.gam, m.gam1, test = "LRT") #porovnat modely
+gam.check(model)
+coef(model)
 
-
-par(mfrow=c(2,2))
-plot(m.gam1, pages = 1, trans = plogis, shift = coef(m.gam1)[1], seWithMean = TRUE)
-
-#predict()
-#plogis() #převede na pravdepodobnost
-plot(m.gam1, pages = 1, trans = plogis)
-plot(m.gam1, pages = 1, trans = plogis,shift = coef(m.gam1)[1]) #pridan intercept
-plot(m.gam1, pages = 1, trans = plogis, shift = coef(m.gam1)[1], seWithMean = TRUE)
-#Earlier we learned about the seWithMean argument, which adds the intercept uncertainty to the smooth uncertainty. It is natural to include this uncertainty here, as we are adding the intercept term.
-#Now, the confidence intervals in our partial effect plots also have a natural interpretation. They may be interpreted as the range of uncertainty of the probability of the outcome for any value of the variable, holding other variables equal at their average value.
-plot(m.gam1, pages = 1, trans = plogis, shift = coef(m.gam1)[1], seWithMean = TRUE, rug = FALSE, shade = TRUE, shade.col = "lightgreen", col = "purple")
-predict(m.gam1, type="response") #vrátí ve formě pravděpodobnosti stejně jako plogis(predict(log_mod2, type="link"))
-predict(m.gam1, type = "link", se.fit = TRUE) #obsahuje standard errors
-
-#predict(log_mod2, type = "terms") If we were to sum across all the columns of this matrix, and add the intercept, we would have our overall prediction the log-odds scale.
-plogis(sum(predict(m.gam1, type = "terms")[1, ]) + coef(m.gam1)[1]) # If we add these terms up, add the intercept, and transform using the plogis() function, we get this data point's predicted purchase probability.
-
-#zkousim vykresleni basic splinu
-   
-    # Připravení dat pro predikci
-    new_data <- data.frame(variable= seq(min(variable), max(variable), length.out = 100))
-    
-    # Predikce na nových datech
-    predictions <- predict(m.gam1, newdata = new_data, type = "terms")
-    
-    # Vykreslení smooth funkce pro AMT_INCOME_TOTAL
-    plot(new_data$variable, predictions[, "s(variable)"], type = "l", col = "blue", lty = 1, xlab = "variable", ylab = "Smooth funkce")
+### Predict the probabilities for the validation dataset.
+predict.model <- predict(model, test, type="response") #již ve formě pravděpodobnosti, tedy po transformaci 1/(1+exp(-predict(model, newdata=test)))
+auc(test$TARGET, predict.model) #pro model bez úprav je 0.6563, s upravami 0.6558
