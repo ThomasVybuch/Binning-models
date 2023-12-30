@@ -170,17 +170,21 @@ ggplot(data=homecredit, aes(x=homecredit$CODE_GENDER, group=homecredit$TARGET, f
 
 homecredit$NUM_ANNUITY=homecredit$AMT_CREDIT / homecredit$AMT_ANNUITY             # CREDIT/ANUITY
 homecredit$ANNUITY_RATIO=homecredit$AMT_INCOME_TOTAL / homecredit$AMT_ANNUITY     # INCOME/ANUITY
-
-median_employment <- median(homecredit$DAYS_EMPLOYED)
-homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- median_employment
-homecredit <- homecredit[homecredit$CODE_GENDER == "M" | homecredit$CODE_GENDER == "F", ]
+homecredit <- homecredit[homecredit$CODE_GENDER == "M" | homecredit$CODE_GENDER == "F", ] # uprav pohlavi
 summary(homecredit$CODE_GENDER)
+
+# asi neimputovat
+#median_employment <- median(homecredit$DAYS_EMPLOYED)
+#homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- median_employment
+homecredit$DAYS_EMPl_NA <- ifelse(homecredit$DAYS_EMPLOYED == 365243, 1, 0)
+homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- 0
   
 variables = c("TARGET","CODE_GENDER",
               "NUM_ANNUITY","ANNUITY_RATIO","NAME_FAMILY_STATUS",
               "DAYS_BIRTH","DAYS_EMPLOYED","NAME_EDUCATION_TYPE","NAME_HOUSING_TYPE",
               "DAYS_LAST_PHONE_CHANGE",
-              "NAME_CONTRACT_TYPE"
+              "NAME_CONTRACT_TYPE",
+              "DAYS_EMPl_NA"
               )
 
 prepare_df <- function(data, variables) {
