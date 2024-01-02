@@ -79,7 +79,39 @@ variables_CAT = c("CODE_GENDER",
 ### SMBINNING
 ##############################################################
 
+sm_binning <- function(data, variable, test) {
+  for (i in variables) { 
+    
+    result=smbinning(data, "TARGET", i)
+    data[paste("binned",i,sep = "")] <- as.numeric(as.character(cut(data[,i], breaks = result$bands, 
+                                                                    labels = result$ivtable$IV[1:(length(result$ivtable$IV)-2)])))
+    print(result)
+    par(mfrow = c(1, 2))
+    smbinning.plot ( result , option= "dist" ) 
+    smbinning.plot ( result , option= "WoE")
+    par(mfrow = c(1, 1))
+    breaks = c(-Inf,result$bands[2:(length(result$bands)-1)],Inf)                       #breaks=result$bands
+    lables = result$ivtable$IV[1:(length(result$ivtable$IV)-2)]
+    print(breaks)                         
+    #binned_test(test,breaks,lables,i)
+    test[paste("binned",i,sep = "")] = as.numeric(as.character(cut(test[,i], breaks = breaks, 
+                                                                   labels = lables)))
+  }
+  data=list(data,test)
+  return (data)
+}
+SM = sm_binning(train,variables,test)
 
+train_sm = SM[[1]]
+test_sm = SM[[2]]
+
+M_2 = glm (TARGET ~ CODE_GENDER+NAME_CONTRACT_TYPE+DAYS_EMPl_NA+
+             binnedNUM_ANNUITY+binnedANNUITY_RATIO+NAME_FAMILY_STATUS+
+             binnedDAYS_BIRTH+binnedDAYS_EMPLOYED+NAME_EDUCATION_TYPE+NAME_HOUSING_TYPE+
+             binnedDAYS_LAST_PHONE_CHANGE, data = train_sm, family = binomial)
+
+predicted2 <- predict(M_2, test_sm, type="response")
+auc(test_sm$TARGET, predicted2)
 
 
 
