@@ -1,8 +1,8 @@
 homecredit<- read.csv("~/home-credit-default-risk/application_train.csv", stringsAsFactors=TRUE)
 
 library(dplyr)
-library(smbinning)
 library(pROC)
+library(ggplot2)
 
 summary(homecredit)
 
@@ -35,7 +35,7 @@ ggplot(data=df, aes(x=df$AMT_INCOME_TOTAL, group=df$TARGET, fill=factor(df$TARGE
   scale_x_continuous(limits = c(0, 500000))
 
 
-# 3 PODEZØELÉ SPOJITÉ
+# PODEZØELÉ SPOJITÉ
 ggplot(data=df, aes(x=df$DAYS_LAST_PHONE_CHANGE, group=df$TARGET, fill=factor(df$TARGET))) +
   geom_density(alpha=.5) +
   labs(x = "DAYS_LAST_PHONE_CHANGE",
@@ -54,13 +54,6 @@ ggplot(data=df, aes(x=df$DAYS_ID_PUBLISH, group=df$TARGET, fill=factor(df$TARGET
   scale_y_continuous(labels = function(x) format(x, big.mark = " ", scientific = FALSE))
 
 
-ggplot(data=df, aes(x=df$HOUR_APPR_PROCESS_START, group=df$TARGET, fill=factor(df$TARGET))) +
-  geom_density(alpha=.5) +
-  labs(x = "HOUR_APPR_PROCESS_START",
-       y = "Hustota",
-       fill = "TARGET") + 
-  scale_fill_manual(values = c("0" = "darkblue", "1" = "gold")) + 
-  scale_y_continuous(labels = function(x) format(x, big.mark = " ", scientific = FALSE))
 
 
 
@@ -108,7 +101,7 @@ ggplot(data=df, aes(x=df$DAYS_EMPLOYED, group=df$TARGET, fill=factor(df$TARGET))
   scale_fill_manual(values = c("0" = "darkblue", "1" = "gold")) 
   scale_y_continuous(labels = function(x) format(x, big.mark = " ", scientific = FALSE))
   
-Summary(homecredit$days)
+
   
 # DISKRETNI PROMENNE
 # CODE_GENDER,FLAG_OWN_REALTY, NAME_FAMILY_STATUS, NAME_EDUCATION_TYPE,NAME_HOUSING_TYPE
@@ -117,7 +110,7 @@ Summary(homecredit$days)
     labs(x = "CODE_GENDER", y = "Hustota", fill = "TARGET") + 
     scale_fill_manual(values = c("0" = "darkblue", "1" = "gold")) + scale_y_continuous(labels = function(x) format(x, big.mark = " ", scientific = FALSE))
 
-  ggplot(data=df, aes(x=df$FLAG_OWN_REALTY, group=df$TARGET, fill=factor(df$TARGET))) + # NOT IMPORTANT ????
+  ggplot(data=df, aes(x=df$FLAG_OWN_REALTY, group=df$TARGET, fill=factor(df$TARGET))) + 
     geom_density(alpha=.5) +
     labs(x = "FLAG_OWN_REALTY", y = "Hustota", fill = "TARGET") + 
     scale_fill_manual(values = c("0" = "darkblue", "1" = "gold")) + scale_y_continuous(labels = function(x) format(x, big.mark = " ", scientific = FALSE))
@@ -127,6 +120,15 @@ Summary(homecredit$days)
     labs(x = "NAME_FAMILY_STATUS", y = "Hustota", fill = "TARGET") + 
     scale_fill_manual(values = c("0" = "darkblue", "1" = "gold")) + scale_y_continuous(labels = function(x) format(x, big.mark = " ", scientific = FALSE))
   
+  ggplot(df, aes(x = factor(NAME_FAMILY_STATUS), fill = factor(df$TARGET))) +
+    geom_bar() +
+    labs(title = "Rozlozeni hodnot promenne TARGET",
+         x = "NAME_FAMILY_STATUS",
+         y = "Pocet pozorovani",
+         fill = "TARGET") +  # Legenda
+    scale_fill_manual(values = c("0" = "darkblue", "1" = "gold"))+
+    scale_y_continuous(labels = function(x) format(x, big.mark = " ", scientific = FALSE))
+                       
   ggplot(data=df, aes(x=df$NAME_HOUSING_TYPE, group=df$TARGET, fill=factor(df$TARGET))) +
     geom_density(alpha=.5) +
     labs(x = "NAME_HOUSING_TYPE", y = "Hustota", fill = "TARGET") + 
