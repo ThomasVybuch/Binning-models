@@ -175,9 +175,6 @@ homecredit$ANNUITY_RATIO=homecredit$AMT_INCOME_TOTAL / homecredit$AMT_ANNUITY   
 homecredit <- homecredit[homecredit$CODE_GENDER == "M" | homecredit$CODE_GENDER == "F", ] # uprav pohlavi
 summary(homecredit$CODE_GENDER)
 
-# asi neimputovat
-#median_employment <- median(homecredit$DAYS_EMPLOYED)
-#homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- median_employment
 homecredit$DAYS_EMPl_NA <- ifelse(homecredit$DAYS_EMPLOYED == 365243, 1, 0)
 homecredit$DAYS_EMPLOYED[homecredit$DAYS_EMPLOYED == 365243] <- 0
   
