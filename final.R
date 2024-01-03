@@ -128,14 +128,14 @@ sm_binning <- function(data, variable, test) {
     
     result=smbinning(data, "TARGET", i)
     data[paste("binned",i,sep = "")] <- as.numeric(as.character(cut(data[,i], breaks = result$bands, 
-                                                                    labels = result$ivtable$IV[1:(length(result$ivtable$IV)-2)])))
+                                                                    labels = result$ivtable$WoE[1:(length(result$ivtable$WoE)-2)])))
     print(result)
     par(mfrow = c(1, 2))
     smbinning.plot ( result , option= "dist" ) 
     smbinning.plot ( result , option= "WoE")
     par(mfrow = c(1, 1))
     breaks = c(-Inf,result$bands[2:(length(result$bands)-1)],Inf)                       #breaks=result$bands
-    lables = result$ivtable$IV[1:(length(result$ivtable$IV)-2)]
+    lables = result$ivtable$WoE[1:(length(result$ivtable$WoE)-2)]
     print(breaks)                         
     #binned_test(test,breaks,lables,i)
     test[paste("binned",i,sep = "")] = as.numeric(as.character(cut(test[,i], breaks = breaks, 
@@ -156,6 +156,9 @@ M_2 = glm (TARGET ~ CODE_GENDER+NAME_CONTRACT_TYPE+DAYS_EMPl_NA+
 
 predicted2 <- predict(M_2, test_sm, type="response")
 auc(test_sm$TARGET, predicted2)
+
+predicted2_train <- predict(M_2, train_sm, type="response")
+auc(train_sm$TARGET, predicted2_train)
 
 
 
@@ -208,7 +211,8 @@ M_3 = glm (TARGET ~ CODE_GENDER+NAME_CONTRACT_TYPE+DAYS_EMPl_NA+
 predicted3 <- predict(M_3, test, type="response")
 auc(test$TARGET, predicted3)
 
-
+predicted3_train <- predict(M_3, train, type="response")
+auc(train$TARGET, predicted3_train)
 
 #############################################
 # SECOND TREES
@@ -250,4 +254,5 @@ M_4 = glm (TARGET ~ CODE_GENDER+NAME_CONTRACT_TYPE+DAYS_EMPl_NA+
 predicted4 <- predict(M_4, test, type="response")
 auc(test$TARGET, predicted4)
 
-
+predicted4_train <- predict(M_4, train, type="response")
+auc(train$TARGET, predicted4_train)
