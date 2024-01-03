@@ -39,15 +39,12 @@ prepare_df <- function(data, variables) {
   return (data)
 }
 
-# Set seed
-set.seed(12345)
-
 # Final datasets
 data = prepare_df(homecredit, variables_ALL)
 train  <- data[100001:(dim(data)[1]), ]
 test   <- data[1:100000, ]
 
-# vEKTOR SPOJITYCH DAT
+# VEKTOR SPOJITYCH DAT
 variables = c("NUM_ANNUITY","ANNUITY_RATIO","DAYS_BIRTH","DAYS_EMPLOYED", "DAYS_LAST_PHONE_CHANGE")
 
 # VEKTOR KATEGORICKYCH DAT
@@ -63,16 +60,63 @@ variables_CAT = c("CODE_GENDER",
 ### GAM
 ##############################################################
 
+ModelGAM <- function(data_train, data_test, y){
+    CreateGAMFormula <- function(data, y){
+      names <- names(data[,!(names(data) %in% y)])
+      if (length(names)>0){
+        for (i in 1:length(names)){
+          if (i==1){
+            if (is.factor(data[[names[i]]]) | is.character(data[[names[i]]])){
+              Formula <- paste0(y," ~", names[i])     
+            } else if (is.binary(data[[names[i]]]) | length(unique(data[[names[i]]]))<4){
+              Formula <- paste0(y," ~", names[i])     
+            } else{
+              Formula <- paste0(y," ~ s(", names[i],", bs=\"bs\")")}
+          }
+          else{
+            if (is.factor(data[[names[i]]]) | is.character(data[[names[i]]])){
+              Formula <- paste0(Formula, "+ ",names[i])
+            } else if (is.binary(data[[names[i]]]) | length(unique(data[[names[i]]]))<4){
+              Formula <- paste0(Formula, "+ ",names[i])
+            } else{
+              Formula <-  paste0(Formula," + s(", names[i],", bs=\"bs\")")
+            }
+          }
+        }
+      }
+      return(as.formula(Formula))
+    }
+    y=data_train$TARGET
+    names <- names(data_train[,!(names(data_train) %in% y)])
+    data_train[names]<-droplevels(data_train[names], "XNA")
+    names <- names(data_test[,!(names(data_test) %in% y)])
+    data_test[names]<-droplevels(data_test[names], "XNA")
+    
+    f <- CreateGAMFormula(data_train, "TARGET")
+    model <- mgcv::gam(f , data=data_train, family=binomial(link="logit"), method="REML")
+    
+    concurv=mgcv::concurvity(model,full=TRUE)["worst",2:(length(variables)+1)]<0.8
+    concurv=sum(concurv==TRUE)==length(variables)
+    if (concurv==TRUE) {
+      concurv_fin="V tomto modelu není souběh zakřivení větší než 0.8"
+    } else {
+      concurv_fin=c("V tomto modelu je souběh zakřivení větší než 0.8. Podívejte se na funkci mgcv::concurvity(model,full=FALSE)$worst a vyřaďte dle úvážení některé proměnné.")
+    }    
+    predict.model <- predict(model, data_test, type="response")
+    vysl_auc=round(auc(data_test$TARGET, predict.model),4)
 
+return(c(concurv_fin, "AUC tohoto modelu je rovno", vysl_auc ))
+}
+  #Pokud je souběh zakřivení větší než 0.8 (popř než 0.6)
+  mgcv::concurvity(model,full=FALSE)$worst
 
+  #Kontrola edf
+  mgcv::gam.check(model)
+    #Pokud je edf blízké k´, pak u modelu "f" u konkretni promenne upravte "s(promenna, bs="bs", k=X)" a za X zvolte vyšší hodnotu než 10. Poté spustte kod od casti model <-
 
-
-
-
-
-
-
-
+###### GRAFY ######
+for (i in 1:length(variables)){
+  plot(model, select=i, scale=0, scheme=1)}
 
 
 ##############################################################
